@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      students: {
+        Row: {
+          available_days: string[] | null
+          birth_date: string | null
+          created_at: string
+          distance: string | null
+          event_date: string | null
+          event_name: string | null
+          id: string
+          objective: string | null
+          observations: string | null
+          updated_at: string
+          user_id: string
+          weekly_frequency: number | null
+        }
+        Insert: {
+          available_days?: string[] | null
+          birth_date?: string | null
+          created_at?: string
+          distance?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string
+          objective?: string | null
+          observations?: string | null
+          updated_at?: string
+          user_id: string
+          weekly_frequency?: number | null
+        }
+        Update: {
+          available_days?: string[] | null
+          birth_date?: string | null
+          created_at?: string
+          distance?: string | null
+          event_date?: string | null
+          event_name?: string | null
+          id?: string
+          objective?: string | null
+          observations?: string | null
+          updated_at?: string
+          user_id?: string
+          weekly_frequency?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
