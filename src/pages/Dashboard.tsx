@@ -1,12 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { Questionnaire } from "@/components/Questionnaire";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -14,16 +17,48 @@ const Dashboard = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("students")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking profile:", error);
+        setHasProfile(false);
+        return;
+      }
+
+      setHasProfile(!!data);
+    };
+
+    if (user) {
+      checkProfile();
+    }
+  }, [user]);
+
+  if (loading || hasProfile === null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Carregando...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
       </div>
     );
   }
 
   if (!user) {
     return null;
+  }
+
+  // Show questionnaire if profile is not complete
+  if (!hasProfile) {
+    return <Questionnaire />;
   }
 
   return (
