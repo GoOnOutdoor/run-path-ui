@@ -317,10 +317,10 @@ export const Questionnaire = () => {
       });
     } else {
       toast({
-        title: "Perfil completo!",
-        description: "Seus dados foram salvos com sucesso.",
+        title: "Questionário completo!",
+        description: "Revise suas respostas antes de finalizar.",
       });
-      navigate("/dashboard");
+      navigate("/summary");
     }
   };
 
