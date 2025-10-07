@@ -51,6 +51,7 @@ export const Questionnaire = () => {
     available_days: [],
     distance: "5",
   });
+  const [dateInputs, setDateInputs] = useState<Record<string, string>>({});
 
   // Load existing data from Supabase
   useEffect(() => {
@@ -79,6 +80,16 @@ export const Questionnaire = () => {
           birth_date: studentData.birth_date ? new Date(studentData.birth_date) : undefined,
           observations: studentData.observations || "",
         });
+
+        // Initialize date inputs
+        const inputs: Record<string, string> = {};
+        if (studentData.event_date) {
+          inputs.event_date = format(new Date(studentData.event_date), "dd/MM/yyyy");
+        }
+        if (studentData.birth_date) {
+          inputs.birth_date = format(new Date(studentData.birth_date), "dd/MM/yyyy");
+        }
+        setDateInputs(inputs);
       }
     };
 
@@ -440,45 +451,40 @@ export const Questionnaire = () => {
         );
 
       case "date":
-        const dateValue = data[question.id as keyof QuestionnaireData] as Date | undefined;
-        const [inputValue, setInputValue] = useState(dateValue ? format(dateValue, "dd/MM/yyyy") : "");
-
-        const formatDateInput = (value: string) => {
-          // Remove all non-digit characters
-          const digits = value.replace(/\D/g, '');
-
-          // Format as DD/MM/YYYY
-          let formatted = '';
-          if (digits.length > 0) {
-            formatted = digits.substring(0, 2);
-            if (digits.length > 2) {
-              formatted += '/' + digits.substring(2, 4);
-            }
-            if (digits.length > 4) {
-              formatted += '/' + digits.substring(4, 8);
-            }
-          }
-          return formatted;
-        };
-
         const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const formatted = formatDateInput(e.target.value);
-          setInputValue(formatted);
+          const value = e.target.value;
+          setDateInputs({ ...dateInputs, [question.id]: value });
 
-          // Try to parse complete date
-          if (formatted.length === 10) {
-            const parts = formatted.split('/');
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1;
-            const year = parseInt(parts[2], 10);
+          // Try to parse the date in various formats
+          const parseDate = (input: string): Date | null => {
+            // Remove extra spaces
+            const cleaned = input.trim();
 
-            if (!isNaN(day) && !isNaN(month) && !isNaN(year) &&
-                day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900) {
-              const date = new Date(year, month, day);
-              if (!isNaN(date.getTime())) {
-                updateData({ [question.id]: date });
+            // Try DD/MM/YYYY or DD/MM/YY
+            const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+            if (match) {
+              const day = parseInt(match[1], 10);
+              const month = parseInt(match[2], 10) - 1;
+              let year = parseInt(match[3], 10);
+
+              // Convert 2-digit year to 4-digit
+              if (year < 100) {
+                year += year < 50 ? 2000 : 1900;
+              }
+
+              if (day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900 && year <= 2100) {
+                const date = new Date(year, month, day);
+                if (!isNaN(date.getTime())) {
+                  return date;
+                }
               }
             }
+            return null;
+          };
+
+          const parsedDate = parseDate(value);
+          if (parsedDate) {
+            updateData({ [question.id]: parsedDate });
           }
         };
 
@@ -486,11 +492,9 @@ export const Questionnaire = () => {
           <Input
             type="text"
             placeholder="DD/MM/AAAA"
-            value={inputValue}
+            value={dateInputs[question.id] || ""}
             onChange={handleDateInput}
             className="text-lg p-6"
-            maxLength={10}
-            inputMode="numeric"
           />
         );
 
