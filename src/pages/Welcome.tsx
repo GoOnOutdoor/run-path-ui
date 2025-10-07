@@ -42,7 +42,7 @@ const Welcome = () => {
         </h1>
         
         <p className="text-xl text-muted-foreground max-w-xl mx-auto">
-          Treine com inteligência. Conquiste montanhas. Supere seus limites.
+          O método que transformou mais de 400 atletas ao redor do mundo, agora potencializado por inteligência artificial. Com uma nova tecnologia Go On AI, você tem treinos de corrida que evoluem com você.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
