@@ -443,37 +443,88 @@ export const Questionnaire = () => {
         );
 
       case "date":
+        const dateValue = data[question.id as keyof QuestionnaireData] as Date | undefined;
+        const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+          const value = e.target.value;
+          // Parse DD/MM/YYYY format
+          const parts = value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+            const year = parseInt(parts[2], 10);
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+              const date = new Date(year, month, day);
+              if (!isNaN(date.getTime())) {
+                updateData({ [question.id]: date });
+              }
+            }
+          }
+        };
+
         return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal h-14 text-lg",
-                  !data[question.id as keyof QuestionnaireData] && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-5 w-5" />
-                {data[question.id as keyof QuestionnaireData] instanceof Date
-                  ? format(data[question.id as keyof QuestionnaireData] as Date, "dd/MM/yyyy")
-                  : "Selecione uma data"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={data[question.id as keyof QuestionnaireData] as Date}
-                onSelect={(date) => date && updateData({ [question.id]: date })}
-                disabled={(date) =>
-                  question.id === "event_date"
-                    ? date < new Date()
-                    : date > new Date()
+          <div className="space-y-4">
+            <Input
+              type="text"
+              placeholder="DD/MM/AAAA"
+              value={dateValue ? format(dateValue, "dd/MM/yyyy") : ""}
+              onChange={handleDateInput}
+              className="text-lg p-6"
+              maxLength={10}
+              onKeyDown={(e) => {
+                const input = e.currentTarget.value;
+                const key = e.key;
+
+                // Allow: backspace, delete, tab, escape, enter
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(key)) {
+                  return;
                 }
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                if (e.ctrlKey || e.metaKey) {
+                  return;
+                }
+
+                // Ensure only numbers and /
+                if (!/[0-9\/]/.test(key)) {
+                  e.preventDefault();
+                  return;
+                }
+
+                // Auto-add slashes after day and month
+                if (key !== '/' && /^\d{2}$/.test(input)) {
+                  e.currentTarget.value = input + '/';
+                } else if (key !== '/' && /^\d{2}\/\d{2}$/.test(input)) {
+                  e.currentTarget.value = input + '/';
+                }
+              }}
+            />
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal h-12"
+                  type="button"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  Ou selecione no calendário
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateValue}
+                  onSelect={(date) => date && updateData({ [question.id]: date })}
+                  disabled={(date) =>
+                    question.id === "event_date"
+                      ? date < new Date()
+                      : date > new Date()
+                  }
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         );
 
       case "info":
