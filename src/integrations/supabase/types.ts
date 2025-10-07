@@ -59,6 +59,74 @@ export type Database = {
         }
         Relationships: []
       }
+      training_plans: {
+        Row: {
+          created_at: string
+          id: string
+          plan_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          plan_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          plan_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      webhook_logs: {
+        Row: {
+          attempt_number: number
+          created_at: string
+          error_message: string | null
+          id: string
+          plan_id: string | null
+          status_code: number | null
+          success: boolean
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          attempt_number?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          plan_id?: string | null
+          status_code?: number | null
+          success?: boolean
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          attempt_number?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          plan_id?: string | null
+          status_code?: number | null
+          success?: boolean
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

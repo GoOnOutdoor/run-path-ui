@@ -95,17 +95,20 @@ export const Questionnaire = () => {
 
       const { error } = await supabase
         .from("students")
-        .upsert({
-          user_id: user.id,
-          objective: data.objective,
-          event_name: data.event_name,
-          event_date: data.event_date?.toISOString().split('T')[0],
-          weekly_frequency: data.weekly_frequency,
-          available_days: data.available_days,
-          distance: data.distance,
-          birth_date: data.birth_date?.toISOString().split('T')[0],
-          observations: data.observations,
-        });
+        .upsert(
+          {
+            user_id: user.id,
+            objective: data.objective,
+            event_name: data.event_name,
+            event_date: data.event_date?.toISOString().split('T')[0],
+            weekly_frequency: data.weekly_frequency,
+            available_days: data.available_days,
+            distance: data.distance,
+            birth_date: data.birth_date?.toISOString().split('T')[0],
+            observations: data.observations,
+          },
+          { onConflict: 'user_id' }
+        );
 
       if (error) {
         console.error("Error saving data:", error);
@@ -297,17 +300,20 @@ export const Questionnaire = () => {
 
     const { error } = await supabase
       .from("students")
-      .upsert({
-        user_id: user.id,
-        objective: data.objective,
-        event_name: data.event_name,
-        event_date: data.event_date?.toISOString().split('T')[0],
-        weekly_frequency: data.weekly_frequency,
-        available_days: data.available_days,
-        distance: data.distance,
-        birth_date: data.birth_date?.toISOString().split('T')[0],
-        observations: data.observations,
-      });
+      .upsert(
+        {
+          user_id: user.id,
+          objective: data.objective,
+          event_name: data.event_name,
+          event_date: data.event_date?.toISOString().split('T')[0],
+          weekly_frequency: data.weekly_frequency,
+          available_days: data.available_days,
+          distance: data.distance,
+          birth_date: data.birth_date?.toISOString().split('T')[0],
+          observations: data.observations,
+        },
+        { onConflict: 'user_id' }
+      );
 
     if (error) {
       toast({
