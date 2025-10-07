@@ -28,6 +28,19 @@ export type Database = {
           updated_at: string
           user_id: string
           weekly_frequency: number | null
+          // New fields for 15 questions
+          custom_distance: number | null
+          terrain: string | null
+          gender: string | null
+          experience: string | null
+          activity_level: string | null
+          estimated_times: string | null
+          special_observations: string | null
+          start_date: string | null
+          start_date_option: string | null
+          plan_duration: string | null
+          custom_duration: number | null
+          test_frequency: string | null
         }
         Insert: {
           available_days?: string[] | null
@@ -42,6 +55,19 @@ export type Database = {
           updated_at?: string
           user_id: string
           weekly_frequency?: number | null
+          // New fields for 15 questions
+          custom_distance?: number | null
+          terrain?: string | null
+          gender?: string | null
+          experience?: string | null
+          activity_level?: string | null
+          estimated_times?: string | null
+          special_observations?: string | null
+          start_date?: string | null
+          start_date_option?: string | null
+          plan_duration?: string | null
+          custom_duration?: number | null
+          test_frequency?: string | null
         }
         Update: {
           available_days?: string[] | null
@@ -56,6 +82,19 @@ export type Database = {
           updated_at?: string
           user_id?: string
           weekly_frequency?: number | null
+          // New fields for 15 questions
+          custom_distance?: number | null
+          terrain?: string | null
+          gender?: string | null
+          experience?: string | null
+          activity_level?: string | null
+          estimated_times?: string | null
+          special_observations?: string | null
+          start_date?: string | null
+          start_date_option?: string | null
+          plan_duration?: string | null
+          custom_duration?: number | null
+          test_frequency?: string | null
         }
         Relationships: []
       }
