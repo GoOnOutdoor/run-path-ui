@@ -37,8 +37,7 @@ const Welcome = () => {
       {/* Content */}
       <div className="relative z-10 max-w-2xl text-center space-y-8">
         <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4">
-          Trail Running
-          <span className="block text-primary mt-2">Training System</span>
+          <span className="text-orange-500">Inteligência</span> a Cada Passo
         </h1>
         
         <p className="text-xl text-muted-foreground max-w-xl mx-auto">
