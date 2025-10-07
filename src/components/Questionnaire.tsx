@@ -10,9 +10,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -444,15 +441,39 @@ export const Questionnaire = () => {
 
       case "date":
         const dateValue = data[question.id as keyof QuestionnaireData] as Date | undefined;
+        const [inputValue, setInputValue] = useState(dateValue ? format(dateValue, "dd/MM/yyyy") : "");
+
+        const formatDateInput = (value: string) => {
+          // Remove all non-digit characters
+          const digits = value.replace(/\D/g, '');
+
+          // Format as DD/MM/YYYY
+          let formatted = '';
+          if (digits.length > 0) {
+            formatted = digits.substring(0, 2);
+            if (digits.length > 2) {
+              formatted += '/' + digits.substring(2, 4);
+            }
+            if (digits.length > 4) {
+              formatted += '/' + digits.substring(4, 8);
+            }
+          }
+          return formatted;
+        };
+
         const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-          const value = e.target.value;
-          // Parse DD/MM/YYYY format
-          const parts = value.split('/');
-          if (parts.length === 3) {
+          const formatted = formatDateInput(e.target.value);
+          setInputValue(formatted);
+
+          // Try to parse complete date
+          if (formatted.length === 10) {
+            const parts = formatted.split('/');
             const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+            const month = parseInt(parts[1], 10) - 1;
             const year = parseInt(parts[2], 10);
-            if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year) &&
+                day >= 1 && day <= 31 && month >= 0 && month <= 11 && year >= 1900) {
               const date = new Date(year, month, day);
               if (!isNaN(date.getTime())) {
                 updateData({ [question.id]: date });
@@ -462,69 +483,15 @@ export const Questionnaire = () => {
         };
 
         return (
-          <div className="space-y-4">
-            <Input
-              type="text"
-              placeholder="DD/MM/AAAA"
-              value={dateValue ? format(dateValue, "dd/MM/yyyy") : ""}
-              onChange={handleDateInput}
-              className="text-lg p-6"
-              maxLength={10}
-              onKeyDown={(e) => {
-                const input = e.currentTarget.value;
-                const key = e.key;
-
-                // Allow: backspace, delete, tab, escape, enter
-                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(key)) {
-                  return;
-                }
-
-                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-                if (e.ctrlKey || e.metaKey) {
-                  return;
-                }
-
-                // Ensure only numbers and /
-                if (!/[0-9\/]/.test(key)) {
-                  e.preventDefault();
-                  return;
-                }
-
-                // Auto-add slashes after day and month
-                if (key !== '/' && /^\d{2}$/.test(input)) {
-                  e.currentTarget.value = input + '/';
-                } else if (key !== '/' && /^\d{2}\/\d{2}$/.test(input)) {
-                  e.currentTarget.value = input + '/';
-                }
-              }}
-            />
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal h-12"
-                  type="button"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Ou selecione no calendário
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateValue}
-                  onSelect={(date) => date && updateData({ [question.id]: date })}
-                  disabled={(date) =>
-                    question.id === "event_date"
-                      ? date < new Date()
-                      : date > new Date()
-                  }
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <Input
+            type="text"
+            placeholder="DD/MM/AAAA"
+            value={inputValue}
+            onChange={handleDateInput}
+            className="text-lg p-6"
+            maxLength={10}
+            inputMode="numeric"
+          />
         );
 
       case "info":
