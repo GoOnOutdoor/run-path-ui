@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -71,11 +73,23 @@ interface QuestionnaireData {
 export const Questionnaire = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<QuestionnaireData>({
     available_days: [],
   });
+  const [showGoalHelpBanner, setShowGoalHelpBanner] = useState(false);
+
+  // Handle goal selection from GoalHelp wizard
+  useEffect(() => {
+    const state = location.state as { selectedGoal?: string; fromGoalHelp?: boolean };
+    if (state?.fromGoalHelp && state?.selectedGoal) {
+      setData(prev => ({ ...prev, objective: state.selectedGoal }));
+      // Clear the state to avoid re-applying
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   // Load existing data from Supabase
   useEffect(() => {
@@ -333,6 +347,8 @@ export const Questionnaire = () => {
 
     // Handle special behaviors
     if (question.id === '1' && data.objective === 'help') {
+      // Show banner when user returns without selecting
+      setShowGoalHelpBanner(true);
       navigate('/goal-help');
       return;
     }
@@ -667,6 +683,23 @@ export const Questionnaire = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
+        {showGoalHelpBanner && data.objective === 'help' && (
+          <Alert className="mb-6 border-primary bg-primary/10">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>Podemos recomendar um objetivo em 30s. Quer tentar?</span>
+              <Button
+                size="sm"
+                variant="default"
+                onClick={() => navigate('/goal-help')}
+                className="ml-4"
+              >
+                Sim, me ajude
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-muted-foreground">
