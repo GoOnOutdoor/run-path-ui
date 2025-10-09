@@ -20,10 +20,7 @@ import { cn } from "@/lib/utils";
 import { QUESTIONS, Question, QuestionOption } from "@/lib/questions";
 
 interface QuestionnaireData {
-  // Pergunta 0: Tipo de corrida
-  race_type?: string;
-
-  // Pergunta 1: Objetivo (Asfalto)
+  // Pergunta 1
   objective?: string;
 
   // Pergunta 2 e 2.5
@@ -71,53 +68,6 @@ interface QuestionnaireData {
 
   // Pergunta 15
   test_frequency?: string;
-
-  // ===== PERGUNTAS DE TRILHA =====
-  // T1: Objetivo na Trilha
-  trail_objective?: string;
-
-  // T2: Tem prova alvo?
-  has_target_race?: string;
-
-  // T2.1-T2.6: Dados da prova alvo
-  trail_race_name?: string;
-  trail_race_date?: Date;
-  trail_race_distance?: number;
-  trail_race_elevation?: number;
-  trail_race_terrain?: string;
-  trail_race_technical_level?: number;
-  trail_race_goal?: string;
-
-  // T3-T4: Dados pessoais
-  trail_gender?: string;
-  trail_birth_date?: Date;
-
-  // T5.A: Experiência em trilhas
-  trail_experience?: string;
-  trail_max_distance?: number;
-  trail_max_elevation?: number;
-
-  // T5.B: Nível de atividade (iniciantes)
-  trail_activity_level?: string;
-
-  // T6-T7: Acesso e disponibilidade
-  trail_terrain_access?: string[];
-  trail_availability?: string;
-
-  // T8-T10: Frequência e dias
-  trail_weekly_frequency?: string;
-  trail_available_days?: string[];
-  trail_trail_days?: string[];
-
-  // T11: Observações
-  trail_observations?: string;
-
-  // T12: Data de início (trilha)
-  trail_start_date?: Date;
-  trail_start_date_option?: string;
-
-  // Store answers dynamically by question ID
-  [key: string]: any;
 }
 
 export const Questionnaire = () => {
@@ -130,7 +80,6 @@ export const Questionnaire = () => {
     available_days: [],
   });
   const [showGoalHelpBanner, setShowGoalHelpBanner] = useState(false);
-  const [dateInputValue, setDateInputValue] = useState("");
 
   // Handle goal selection from GoalHelp wizard
   useEffect(() => {
@@ -160,8 +109,6 @@ export const Questionnaire = () => {
 
       if (studentData) {
         setData({
-          // Pergunta 0 e Asfalto
-          race_type: studentData.race_type || undefined,
           objective: studentData.objective || undefined,
           event_name: studentData.event_name || undefined,
           event_date: studentData.event_date ? new Date(studentData.event_date) : undefined,
@@ -181,31 +128,6 @@ export const Questionnaire = () => {
           plan_duration: studentData.plan_duration || undefined,
           custom_duration: studentData.custom_duration || undefined,
           test_frequency: studentData.test_frequency || undefined,
-
-          // Trilha
-          trail_objective: studentData.trail_objective || undefined,
-          has_target_race: studentData.has_target_race || undefined,
-          trail_race_name: studentData.trail_race_name || undefined,
-          trail_race_date: studentData.trail_race_date ? new Date(studentData.trail_race_date) : undefined,
-          trail_race_distance: studentData.trail_race_distance || undefined,
-          trail_race_elevation: studentData.trail_race_elevation || undefined,
-          trail_race_terrain: studentData.trail_race_terrain || undefined,
-          trail_race_technical_level: studentData.trail_race_technical_level || undefined,
-          trail_race_goal: studentData.trail_race_goal || undefined,
-          trail_gender: studentData.trail_gender || undefined,
-          trail_birth_date: studentData.trail_birth_date ? new Date(studentData.trail_birth_date) : undefined,
-          trail_experience: studentData.trail_experience || undefined,
-          trail_max_distance: studentData.trail_max_distance || undefined,
-          trail_max_elevation: studentData.trail_max_elevation || undefined,
-          trail_activity_level: studentData.trail_activity_level || undefined,
-          trail_terrain_access: studentData.trail_terrain_access || [],
-          trail_availability: studentData.trail_availability || undefined,
-          trail_weekly_frequency: studentData.trail_weekly_frequency?.toString() || undefined,
-          trail_available_days: studentData.trail_available_days || [],
-          trail_trail_days: studentData.trail_trail_days || [],
-          trail_observations: studentData.trail_observations || undefined,
-          trail_start_date: studentData.trail_start_date ? new Date(studentData.trail_start_date) : undefined,
-          trail_start_date_option: studentData.trail_start_date_option || undefined,
         });
       }
     };
@@ -223,8 +145,6 @@ export const Questionnaire = () => {
         .upsert(
           {
             user_id: user.id,
-            // Pergunta 0 e Asfalto
-            race_type: data.race_type,
             objective: data.objective,
             event_name: data.event_name,
             event_date: data.event_date?.toISOString().split('T')[0],
@@ -244,31 +164,6 @@ export const Questionnaire = () => {
             plan_duration: data.plan_duration,
             custom_duration: data.custom_duration,
             test_frequency: data.test_frequency,
-
-            // Trilha
-            trail_objective: data.trail_objective,
-            has_target_race: data.has_target_race,
-            trail_race_name: data.trail_race_name,
-            trail_race_date: data.trail_race_date?.toISOString().split('T')[0],
-            trail_race_distance: data.trail_race_distance,
-            trail_race_elevation: data.trail_race_elevation,
-            trail_race_terrain: data.trail_race_terrain,
-            trail_race_technical_level: data.trail_race_technical_level,
-            trail_race_goal: data.trail_race_goal,
-            trail_gender: data.trail_gender,
-            trail_birth_date: data.trail_birth_date?.toISOString().split('T')[0],
-            trail_experience: data.trail_experience,
-            trail_max_distance: data.trail_max_distance,
-            trail_max_elevation: data.trail_max_elevation,
-            trail_activity_level: data.trail_activity_level,
-            trail_terrain_access: data.trail_terrain_access,
-            trail_availability: data.trail_availability,
-            trail_weekly_frequency: data.trail_weekly_frequency ? parseInt(data.trail_weekly_frequency) : null,
-            trail_available_days: data.trail_available_days,
-            trail_trail_days: data.trail_trail_days,
-            trail_observations: data.trail_observations,
-            trail_start_date: data.trail_start_date?.toISOString().split('T')[0],
-            trail_start_date_option: data.trail_start_date_option,
           },
           { onConflict: 'user_id' }
         );
@@ -286,82 +181,27 @@ export const Questionnaire = () => {
     setData({ ...data, ...updates });
   };
 
-  // Sincroniza o input de data com o valor atual da pergunta de data
-  useEffect(() => {
-    const questions = getApplicableQuestions();
-    const currentQuestion = questions[currentStep];
-
-    if (currentQuestion && currentQuestion.type === 'date') {
-      const fieldName = getFieldName(currentQuestion.id);
-      const currentDateValue = data[fieldName as keyof QuestionnaireData] as Date | undefined;
-
-      if (currentDateValue) {
-        setDateInputValue(format(currentDateValue, "dd/MM/yyyy"));
-      } else {
-        setDateInputValue("");
-      }
-    }
-  }, [currentStep, data]);
-
-  // Filtra as perguntas aplicáveis baseado no tipo de corrida e objetivo selecionado
+  // Filtra as perguntas aplicáveis baseado no objetivo selecionado
   const getApplicableQuestions = (): Question[] => {
-    const raceType = data.race_type;
     const objective = data.objective;
-    const trailObjective = data.trail_objective;
 
     return QUESTIONS.filter(q => {
-      // Sempre mostra pergunta 0 se race_type não foi selecionado
-      if (q.id === '0') return !raceType;
-
-      // Se não tem race_type, não mostra outras perguntas
-      if (!raceType) return false;
-
-      // Pergunta aplicável a todos
       if (q.applicableTo === 'all') return true;
+      if (!objective) return q.id === '1'; // Apenas primeira pergunta se não tiver objetivo
 
-      // Fluxo de ASFALTO
-      if (raceType === 'road') {
-        // Se não tem objetivo, mostra apenas a pergunta 1
-        if (!objective) return q.id === '1';
-
-        // Filtra perguntas aplicáveis ao objetivo de asfalto
-        return q.applicableTo.includes(objective);
-      }
-
-      // Fluxo de TRILHA
-      if (raceType === 'trail') {
-        // Se não tem trail_objective, mostra apenas a pergunta T1
-        if (!trailObjective) return q.id === 'T1';
-
-        // Filtra perguntas aplicáveis ao objetivo de trilha
-        return q.applicableTo.includes(trailObjective);
-      }
-
-      return false;
+      return q.applicableTo.includes(objective);
     }).filter(q => {
-      // Aplica lógica de conditional display
-      if (q.conditionalDisplay) {
-        const { dependsOn, values } = q.conditionalDisplay;
-        const dependentValue = data[getFieldName(dependsOn) as keyof QuestionnaireData];
-        return dependentValue && values.includes(dependentValue as string);
-      }
-
       // Pula perguntas já respondidas (se configurado)
       if (q.skipIfAnswered) {
         const fieldName = getFieldName(q.id);
         return !data[fieldName as keyof QuestionnaireData];
       }
-
       return true;
     });
   };
 
   const getFieldName = (questionId: string): string => {
     const fieldMap: Record<string, string> = {
-      // Pergunta 0
-      '0': 'race_type',
-
-      // Perguntas de Asfalto
       '1': 'objective',
       '2': 'event_name',
       '2.5': 'event_date',
@@ -378,30 +218,6 @@ export const Questionnaire = () => {
       '13': 'start_date_option',
       '14': 'plan_duration',
       '15': 'test_frequency',
-
-      // Perguntas de Trilha
-      'T1': 'trail_objective',
-      'T2': 'has_target_race',
-      'T2.1': 'trail_race_name',
-      'T2.2': 'trail_race_date',
-      'T2.3': 'trail_race_distance',
-      'T2.4': 'trail_race_elevation',
-      'T2.5': 'trail_race_terrain',
-      'T2.5.1': 'trail_race_technical_level',
-      'T2.6': 'trail_race_goal',
-      'T3': 'trail_gender',
-      'T4': 'trail_birth_date',
-      'T5.A': 'trail_experience',
-      'T5.A.1': 'trail_max_distance',
-      'T5.A.2': 'trail_max_elevation',
-      'T5.B': 'trail_activity_level',
-      'T6': 'trail_terrain_access',
-      'T7': 'trail_availability',
-      'T8': 'trail_weekly_frequency',
-      'T9': 'trail_available_days',
-      'T10': 'trail_trail_days',
-      'T11': 'trail_observations',
-      'T12': 'trail_start_date_option',
     };
     return fieldMap[questionId] || '';
   };
@@ -513,11 +329,6 @@ export const Questionnaire = () => {
       return !!data.start_date;
     }
 
-    // Para pergunta T12, se escolher custom, precisa ter data selecionada
-    if (question.id === 'T12' && data.trail_start_date_option === 'custom') {
-      return !!data.trail_start_date;
-    }
-
     // Para pergunta 3, se escolher custom, precisa ter distância
     if (question.id === '3' && data.distance === 'custom') {
       return !!data.custom_distance;
@@ -546,10 +357,6 @@ export const Questionnaire = () => {
       updateData({ start_date: convertStartDate(data.start_date_option) });
     }
 
-    if (question.id === 'T12' && data.trail_start_date_option && data.trail_start_date_option !== 'custom') {
-      updateData({ trail_start_date: convertStartDate(data.trail_start_date_option) });
-    }
-
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -571,8 +378,6 @@ export const Questionnaire = () => {
       .upsert(
         {
           user_id: user.id,
-          // Pergunta 0 e Asfalto
-          race_type: data.race_type,
           objective: data.objective,
           event_name: data.event_name,
           event_date: data.event_date?.toISOString().split('T')[0],
@@ -592,31 +397,6 @@ export const Questionnaire = () => {
           plan_duration: data.plan_duration,
           custom_duration: data.custom_duration,
           test_frequency: data.test_frequency,
-
-          // Trilha
-          trail_objective: data.trail_objective,
-          has_target_race: data.has_target_race,
-          trail_race_name: data.trail_race_name,
-          trail_race_date: data.trail_race_date?.toISOString().split('T')[0],
-          trail_race_distance: data.trail_race_distance,
-          trail_race_elevation: data.trail_race_elevation,
-          trail_race_terrain: data.trail_race_terrain,
-          trail_race_technical_level: data.trail_race_technical_level,
-          trail_race_goal: data.trail_race_goal,
-          trail_gender: data.trail_gender,
-          trail_birth_date: data.trail_birth_date?.toISOString().split('T')[0],
-          trail_experience: data.trail_experience,
-          trail_max_distance: data.trail_max_distance,
-          trail_max_elevation: data.trail_max_elevation,
-          trail_activity_level: data.trail_activity_level,
-          trail_terrain_access: data.trail_terrain_access,
-          trail_availability: data.trail_availability,
-          trail_weekly_frequency: data.trail_weekly_frequency ? parseInt(data.trail_weekly_frequency) : null,
-          trail_available_days: data.trail_available_days,
-          trail_trail_days: data.trail_trail_days,
-          trail_observations: data.trail_observations,
-          trail_start_date: data.trail_start_date?.toISOString().split('T')[0],
-          trail_start_date_option: data.trail_start_date_option,
         },
         { onConflict: 'user_id' }
       );
@@ -683,8 +463,6 @@ export const Questionnaire = () => {
         );
 
       case 'multiple':
-        const currentValues = (data[fieldName as keyof QuestionnaireData] as string[]) || [];
-
         return (
           <div className="space-y-3">
             {question.options?.map((option) => (
@@ -692,19 +470,20 @@ export const Questionnaire = () => {
                 key={option.value}
                 className={cn(
                   "flex items-center space-x-3 rounded-lg border-2 p-4 cursor-pointer transition-all",
-                  currentValues.includes(option.value)
+                  data.available_days?.includes(option.value)
                     ? "border-primary bg-primary/10"
                     : "border-border bg-card hover:border-primary/50"
                 )}
                 onClick={() => {
-                  const newValues = currentValues.includes(option.value)
-                    ? currentValues.filter((v) => v !== option.value)
-                    : [...currentValues, option.value];
-                  updateData({ [fieldName]: newValues });
+                  const currentDays = data.available_days || [];
+                  const newDays = currentDays.includes(option.value)
+                    ? currentDays.filter((d) => d !== option.value)
+                    : [...currentDays, option.value];
+                  updateData({ available_days: newDays });
                 }}
               >
                 <Checkbox
-                  checked={currentValues.includes(option.value)}
+                  checked={data.available_days?.includes(option.value)}
                   id={option.value}
                 />
                 <Label htmlFor={option.value} className="cursor-pointer flex-1">
@@ -727,43 +506,17 @@ export const Questionnaire = () => {
 
       case 'date':
         const dateValue = data[fieldName as keyof QuestionnaireData] as Date | undefined;
-
-        const handleDateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-          let value = e.target.value.replace(/[^\d\/]/g, ''); // Remove caracteres não numéricos exceto /
-
-          // Auto-adiciona barras
-          if (value.length === 2 && dateInputValue.length === 1) {
-            value = value + '/';
-          } else if (value.length === 5 && dateInputValue.length === 4) {
-            value = value + '/';
-          }
-
-          // Limita a 10 caracteres (DD/MM/AAAA)
-          if (value.length <= 10) {
-            setDateInputValue(value);
-
-            // Tenta fazer parse da data quando estiver completa
-            if (value.length === 10) {
-              const parts = value.split('/');
-              if (parts.length === 3) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10) - 1;
-                const year = parseInt(parts[2], 10);
-
-                if (!isNaN(day) && !isNaN(month) && !isNaN(year) &&
-                    day >= 1 && day <= 31 &&
-                    month >= 0 && month <= 11 &&
-                    year >= 1900 && year <= 2100) {
-                  const date = new Date(year, month, day);
-                  if (!isNaN(date.getTime())) {
-                    updateData({ [fieldName]: date });
-                  }
-                }
-              }
-            } else {
-              // Se não estiver completo e havia uma data, limpa
-              if (dateValue) {
-                updateData({ [fieldName]: undefined });
+        const handleDateInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+          const value = e.target.value;
+          const parts = value.split('/');
+          if (parts.length === 3) {
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const year = parseInt(parts[2], 10);
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+              const date = new Date(year, month, day);
+              if (!isNaN(date.getTime())) {
+                updateData({ [fieldName]: date });
               }
             }
           }
@@ -774,10 +527,33 @@ export const Questionnaire = () => {
             <Input
               type="text"
               placeholder="DD/MM/AAAA"
-              value={dateInputValue}
-              onChange={handleDateInputChange}
+              value={dateValue ? format(dateValue, "dd/MM/yyyy") : ""}
+              onChange={handleDateInput}
               className="text-lg p-6"
               maxLength={10}
+              onKeyDown={(e) => {
+                const input = e.currentTarget.value;
+                const key = e.key;
+
+                if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter'].includes(key)) {
+                  return;
+                }
+
+                if (e.ctrlKey || e.metaKey) {
+                  return;
+                }
+
+                if (!/[0-9\/]/.test(key)) {
+                  e.preventDefault();
+                  return;
+                }
+
+                if (key !== '/' && /^\d{2}$/.test(input)) {
+                  e.currentTarget.value = input + '/';
+                } else if (key !== '/' && /^\d{2}\/\d{2}$/.test(input)) {
+                  e.currentTarget.value = input + '/';
+                }
+              }}
             />
             <Popover>
               <PopoverTrigger asChild>
@@ -795,55 +571,16 @@ export const Questionnaire = () => {
                   mode="single"
                   selected={dateValue}
                   onSelect={(date) => date && updateData({ [fieldName]: date })}
-                  disabled={(date) => {
-                    // Perguntas de data da prova permitem apenas datas futuras
-                    if (question.id === '2.5' || question.id === 'T2.2') {
-                      return date < new Date();
-                    }
-                    // Pergunta de data de nascimento permite apenas datas passadas
-                    return date > new Date();
-                  }}
+                  disabled={(date) =>
+                    question.id === '2.5'
+                      ? date < new Date()
+                      : date > new Date()
+                  }
                   initialFocus
                   className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
-          </div>
-        );
-
-      case 'number':
-        return (
-          <Input
-            type="number"
-            value={data[fieldName as keyof QuestionnaireData] as number || ""}
-            onChange={(e) => updateData({ [fieldName]: e.target.value ? parseInt(e.target.value) : undefined })}
-            placeholder="Digite um número..."
-            className="text-lg p-6"
-          />
-        );
-
-      case 'slider':
-        const sliderValue = data[fieldName as keyof QuestionnaireData] as number;
-        const config = question.sliderConfig || { min: 0, max: 100, step: 1, unit: '' };
-
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <span className="text-4xl font-bold text-primary">{sliderValue || config.min}</span>
-              <span className="text-2xl ml-2">{config.unit}</span>
-            </div>
-            <Slider
-              value={[sliderValue || config.min]}
-              onValueChange={([value]) => updateData({ [fieldName]: value })}
-              min={config.min}
-              max={config.max}
-              step={config.step}
-              className="w-full"
-            />
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{config.min} {config.unit}</span>
-              <span>{config.max} {config.unit}</span>
-            </div>
           </div>
         );
 
@@ -932,35 +669,6 @@ export const Questionnaire = () => {
       );
     }
 
-    if (question.id === 'T12' && data.trail_start_date_option === 'custom') {
-      return (
-        <div className="mt-6 space-y-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal h-12"
-                type="button"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {data.trail_start_date ? format(data.trail_start_date, "dd/MM/yyyy") : "Selecione a data"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={data.trail_start_date}
-                onSelect={(date) => date && updateData({ trail_start_date: date })}
-                disabled={(date) => date < new Date()}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      );
-    }
-
     return null;
   };
 
@@ -1008,19 +716,8 @@ export const Questionnaire = () => {
             <p className="text-sm text-muted-foreground mb-4">{questions[currentStep].subtitle}</p>
           )}
           {questions[currentStep].note && (
-            <div className={cn(
-              "rounded-lg p-3 mb-6",
-              // Notas em laranja para perguntas específicas de trilha
-              ['T2.3', 'T2.4', 'T2.5'].includes(questions[currentStep].id)
-                ? "bg-orange-500/10 border border-orange-500/20"
-                : "bg-primary/10 border border-primary/20"
-            )}>
-              <p className={cn(
-                "text-sm",
-                ['T2.3', 'T2.4', 'T2.5'].includes(questions[currentStep].id)
-                  ? "text-orange-600 dark:text-orange-400"
-                  : "text-muted-foreground"
-              )}>{questions[currentStep].note}</p>
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 mb-6">
+              <p className="text-sm text-muted-foreground">{questions[currentStep].note}</p>
             </div>
           )}
           {renderQuestion()}

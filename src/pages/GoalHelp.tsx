@@ -389,8 +389,8 @@ export default function GoalHelp() {
           {currentStep === 'recommendation' && renderRecommendation()}
         </Card>
 
-        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+          <p className="text-sm text-orange-600 dark:text-orange-400 text-center font-medium">
             Você pode mudar de objetivo a qualquer momento nas configurações do plano — flexibilidade faz parte do método Go On.
           </p>
         </div>

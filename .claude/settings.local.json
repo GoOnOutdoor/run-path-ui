@@ -4,7 +4,9 @@
       "Bash(npm run build:*)",
       "Bash(npm install)",
       "Bash(npm run dev:*)",
-      "Bash(supabase:*)"
+      "Bash(supabase:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx supabase db push:*)"
     ],
     "deny": [],
     "ask": []
