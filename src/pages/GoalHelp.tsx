@@ -90,34 +90,59 @@ export default function GoalHelp() {
   const handleAnswer = (key: keyof WizardAnswers, value: boolean | string) => {
     const newAnswers = { ...answers, [key]: value };
     setAnswers(newAnswers);
+  };
 
-    // Lógica de navegação
+  const handleNext = () => {
     if (currentStep === 'step1') {
-      if (key === 'hasRace' && value === true) {
+      if (answers.hasRace === true) {
         setRecommendedGoal('race');
         setCurrentStep('recommendation');
-      } else if (key === 'hasRace' && value === false) {
+      } else if (answers.hasRace === false) {
         setCurrentStep('step2');
       }
     } else if (currentStep === 'step2') {
-      if (key === 'wantsFocusDistance' && value === true) {
+      if (answers.wantsFocusDistance === true) {
         setRecommendedGoal('distance');
         setCurrentStep('recommendation');
-      } else if (key === 'wantsFocusDistance' && value === false) {
+      } else if (answers.wantsFocusDistance === false) {
         setCurrentStep('step3');
       }
     } else if (currentStep === 'step3') {
-      if (key === 'userDescription') {
+      if (answers.userDescription) {
         // Determinar recomendação baseada na descrição
         let goal: GoalType = 'fitness';
-        if (value === 'beginner') goal = 'first_5k';
-        else if (value === 'fitness') goal = 'fitness';
-        else if (value === 'return') goal = 'return';
+        if (answers.userDescription === 'beginner') goal = 'first_5k';
+        else if (answers.userDescription === 'fitness') goal = 'fitness';
+        else if (answers.userDescription === 'return') goal = 'return';
 
         setRecommendedGoal(goal);
         setCurrentStep('recommendation');
       }
     }
+  };
+
+  const handleBack = () => {
+    if (currentStep === 'step2') {
+      setCurrentStep('step1');
+    } else if (currentStep === 'step3') {
+      setCurrentStep('step2');
+    } else if (currentStep === 'recommendation') {
+      // Volta para o passo que levou à recomendação
+      if (answers.hasRace === true) {
+        setCurrentStep('step1');
+      } else if (answers.wantsFocusDistance === true) {
+        setCurrentStep('step2');
+      } else {
+        setCurrentStep('step3');
+      }
+    }
+  };
+
+  const canProceed = () => {
+    if (currentStep === 'step1') return answers.hasRace !== undefined;
+    if (currentStep === 'step2') return answers.wantsFocusDistance !== undefined;
+    if (currentStep === 'step3') return !!answers.userDescription;
+    return true;
   };
 
   const handleConfirmGoal = () => {
@@ -201,20 +226,26 @@ export default function GoalHelp() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          className="h-24 text-lg font-semibold"
+        <div
+          className={`rounded-lg border-2 p-6 cursor-pointer transition-all ${
+            answers.hasRace === true
+              ? "border-primary bg-primary/10"
+              : "border-border bg-card hover:border-primary/50"
+          }`}
           onClick={() => handleAnswer('hasRace', true)}
         >
-          Sim, já tenho
-        </Button>
-        <Button
-          variant="outline"
-          className="h-24 text-lg font-semibold"
+          <p className="text-lg font-semibold text-center">Sim, já tenho</p>
+        </div>
+        <div
+          className={`rounded-lg border-2 p-6 cursor-pointer transition-all ${
+            answers.hasRace === false
+              ? "border-primary bg-primary/10"
+              : "border-border bg-card hover:border-primary/50"
+          }`}
           onClick={() => handleAnswer('hasRace', false)}
         >
-          Ainda não
-        </Button>
+          <p className="text-lg font-semibold text-center">Ainda não</p>
+        </div>
       </div>
     </div>
   );
@@ -224,20 +255,26 @@ export default function GoalHelp() {
       <h2 className="text-2xl font-bold">Você quer focar em uma distância?</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          className="h-24 text-lg font-semibold"
+        <div
+          className={`rounded-lg border-2 p-6 cursor-pointer transition-all ${
+            answers.wantsFocusDistance === true
+              ? "border-primary bg-primary/10"
+              : "border-border bg-card hover:border-primary/50"
+          }`}
           onClick={() => handleAnswer('wantsFocusDistance', true)}
         >
-          Sim
-        </Button>
-        <Button
-          variant="outline"
-          className="h-24 text-lg font-semibold"
+          <p className="text-lg font-semibold text-center">Sim</p>
+        </div>
+        <div
+          className={`rounded-lg border-2 p-6 cursor-pointer transition-all ${
+            answers.wantsFocusDistance === false
+              ? "border-primary bg-primary/10"
+              : "border-border bg-card hover:border-primary/50"
+          }`}
           onClick={() => handleAnswer('wantsFocusDistance', false)}
         >
-          Não tenho certeza
-        </Button>
+          <p className="text-lg font-semibold text-center">Não tenho certeza</p>
+        </div>
       </div>
     </div>
   );
@@ -248,7 +285,11 @@ export default function GoalHelp() {
 
       <div className="grid grid-cols-1 gap-4">
         <Card
-          className="cursor-pointer hover:border-primary transition-all"
+          className={`cursor-pointer transition-all ${
+            answers.userDescription === 'beginner'
+              ? "border-2 border-primary bg-primary/10"
+              : "border-2 hover:border-primary"
+          }`}
           onClick={() => handleAnswer('userDescription', 'beginner')}
         >
           <CardContent className="p-6">
@@ -258,7 +299,11 @@ export default function GoalHelp() {
         </Card>
 
         <Card
-          className="cursor-pointer hover:border-primary transition-all"
+          className={`cursor-pointer transition-all ${
+            answers.userDescription === 'fitness'
+              ? "border-2 border-primary bg-primary/10"
+              : "border-2 hover:border-primary"
+          }`}
           onClick={() => handleAnswer('userDescription', 'fitness')}
         >
           <CardContent className="p-6">
@@ -268,7 +313,11 @@ export default function GoalHelp() {
         </Card>
 
         <Card
-          className="cursor-pointer hover:border-primary transition-all"
+          className={`cursor-pointer transition-all ${
+            answers.userDescription === 'return'
+              ? "border-2 border-primary bg-primary/10"
+              : "border-2 hover:border-primary"
+          }`}
           onClick={() => handleAnswer('userDescription', 'return')}
         >
           <CardContent className="p-6">
@@ -388,6 +437,27 @@ export default function GoalHelp() {
           {currentStep === 'step3' && renderStep3()}
           {currentStep === 'recommendation' && renderRecommendation()}
         </Card>
+
+        {currentStep !== 'recommendation' && (
+          <div className="flex gap-4 mt-6">
+            {currentStep !== 'step1' && (
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                className="flex-1"
+              >
+                Voltar
+              </Button>
+            )}
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className="flex-1"
+            >
+              Próxima
+            </Button>
+          </div>
+        )}
 
         <div className="mt-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
           <p className="text-sm text-orange-600 dark:text-orange-400 text-center font-medium">

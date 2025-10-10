@@ -23,8 +23,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    await signIn(email, password);
+    const { error } = await signIn(email, password);
     setLoading(false);
+
+    // Navigate to dashboard after successful login
+    if (!error) {
+      navigate("/dashboard");
+    }
   };
 
   if (authLoading) {

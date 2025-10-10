@@ -30,12 +30,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle redirects after auth state changes
-        if (event === "SIGNED_IN" && session?.user) {
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 0);
-        } else if (event === "SIGNED_OUT") {
+        // Only redirect on SIGNED_OUT event, not on SIGNED_IN
+        // Let individual pages handle their own navigation logic
+        if (event === "SIGNED_OUT") {
           setTimeout(() => {
             navigate("/");
           }, 0);

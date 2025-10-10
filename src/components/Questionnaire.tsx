@@ -131,12 +131,17 @@ export const Questionnaire = () => {
   });
   const [showGoalHelpBanner, setShowGoalHelpBanner] = useState(false);
   const [dateInputValue, setDateInputValue] = useState("");
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
 
   // Handle goal selection from GoalHelp wizard
   useEffect(() => {
     const state = location.state as { selectedGoal?: string; fromGoalHelp?: boolean };
     if (state?.fromGoalHelp && state?.selectedGoal) {
-      setData(prev => ({ ...prev, objective: state.selectedGoal }));
+      setData(prev => ({
+        ...prev,
+        objective: state.selectedGoal,
+        race_type: 'road' // GoalHelp is for road running
+      }));
       // Clear the state to avoid re-applying
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -158,11 +163,22 @@ export const Questionnaire = () => {
         return;
       }
 
+      // Clean up 'help' objective if it was saved
+      if (studentData && (studentData.objective === 'help' || studentData.trail_objective === 'trail_help')) {
+        await supabase
+          .from("students")
+          .update({
+            objective: studentData.objective === 'help' ? null : studentData.objective,
+            trail_objective: studentData.trail_objective === 'trail_help' ? null : studentData.trail_objective,
+          })
+          .eq("user_id", user.id);
+      }
+
       if (studentData) {
         setData({
           // Pergunta 0 e Asfalto
           race_type: studentData.race_type || undefined,
-          objective: studentData.objective || undefined,
+          objective: (studentData.objective === 'help' ? undefined : studentData.objective) || undefined,
           event_name: studentData.event_name || undefined,
           event_date: studentData.event_date ? new Date(studentData.event_date) : undefined,
           distance: studentData.distance || undefined,
@@ -218,6 +234,9 @@ export const Questionnaire = () => {
     const saveData = async () => {
       if (!user || currentStep === 0) return;
 
+      // Don't save if objective is 'help' (it's a redirect, not a real objective)
+      if (data.objective === 'help' || data.trail_objective === 'trail_help') return;
+
       const { error } = await supabase
         .from("students")
         .upsert(
@@ -225,7 +244,7 @@ export const Questionnaire = () => {
             user_id: user.id,
             // Pergunta 0 e Asfalto
             race_type: data.race_type,
-            objective: data.objective,
+            objective: data.objective === 'help' ? null : data.objective,
             event_name: data.event_name,
             event_date: data.event_date?.toISOString().split('T')[0],
             distance: data.distance,
@@ -284,6 +303,13 @@ export const Questionnaire = () => {
 
   const updateData = (updates: Partial<QuestionnaireData>) => {
     setData({ ...data, ...updates });
+
+    // If user selects 'help' objective, navigate immediately to GoalHelp
+    if (updates.objective === 'help') {
+      setTimeout(() => {
+        navigate('/goal-help');
+      }, 100);
+    }
   };
 
   // Sincroniza o input de data com o valor atual da pergunta de data
@@ -309,9 +335,16 @@ export const Questionnaire = () => {
     const objective = data.objective;
     const trailObjective = data.trail_objective;
 
-    return QUESTIONS.filter(q => {
-      // Sempre mostra pergunta 0 se race_type não foi selecionado
-      if (q.id === '0') return !raceType;
+    const filteredQuestions = QUESTIONS.filter(q => {
+      // Pergunta 0: Tipo de corrida
+      if (q.id === '0') {
+        // Sempre mostra se não tem race_type
+        if (!raceType) return true;
+        // Se tem race_type mas ainda NÃO foi marcada como respondida, mantém visível
+        if (!answeredQuestions.has('0')) return true;
+        // Caso contrário, oculta
+        return false;
+      }
 
       // Se não tem race_type, não mostra outras perguntas
       if (!raceType) return false;
@@ -321,8 +354,18 @@ export const Questionnaire = () => {
 
       // Fluxo de ASFALTO
       if (raceType === 'road') {
-        // Se não tem objetivo, mostra apenas a pergunta 1
-        if (!objective) return q.id === '1';
+        // Pergunta 1: Objetivo de asfalto
+        if (q.id === '1') {
+          // Sempre mostra se não tem objetivo
+          if (!objective || objective === 'help') return true;
+          // Se tem objective mas ainda NÃO foi marcada como respondida, mantém visível
+          if (!answeredQuestions.has('1')) return true;
+          // Caso contrário, oculta
+          return false;
+        }
+
+        // Se não tem objetivo, não mostra outras perguntas
+        if (!objective || objective === 'help') return false;
 
         // Filtra perguntas aplicáveis ao objetivo de asfalto
         return q.applicableTo.includes(objective);
@@ -330,8 +373,18 @@ export const Questionnaire = () => {
 
       // Fluxo de TRILHA
       if (raceType === 'trail') {
-        // Se não tem trail_objective, mostra apenas a pergunta T1
-        if (!trailObjective) return q.id === 'T1';
+        // Pergunta T1: Objetivo de trilha
+        if (q.id === 'T1') {
+          // Sempre mostra se não tem trail_objective
+          if (!trailObjective || trailObjective === 'trail_help') return true;
+          // Se tem trail_objective mas ainda NÃO foi marcada como respondida, mantém visível
+          if (!answeredQuestions.has('T1')) return true;
+          // Caso contrário, oculta
+          return false;
+        }
+
+        // Se não tem trail_objective, não mostra outras perguntas
+        if (!trailObjective || trailObjective === 'trail_help') return false;
 
         // Filtra perguntas aplicáveis ao objetivo de trilha
         return q.applicableTo.includes(trailObjective);
@@ -354,6 +407,8 @@ export const Questionnaire = () => {
 
       return true;
     });
+
+    return filteredQuestions;
   };
 
   const getFieldName = (questionId: string): string => {
@@ -497,6 +552,14 @@ export const Questionnaire = () => {
   const totalSteps = questions.length;
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
+  // Guard: se currentStep está além do número de perguntas, ajusta
+  useEffect(() => {
+    if (currentStep >= questions.length && questions.length > 0) {
+      setCurrentStep(questions.length - 1);
+    }
+  }, [currentStep, questions.length]);
+
+
   const canProceed = () => {
     const question = questions[currentStep];
     if (!question.required) return true;
@@ -536,6 +599,8 @@ export const Questionnaire = () => {
 
     // Handle special behaviors
     if (question.id === '1' && data.objective === 'help') {
+      // Don't save 'help' as objective, clear it
+      updateData({ objective: undefined });
       // Show banner when user returns without selecting
       setShowGoalHelpBanner(true);
       navigate('/goal-help');
@@ -550,11 +615,25 @@ export const Questionnaire = () => {
       updateData({ trail_start_date: convertStartDate(data.trail_start_date_option) });
     }
 
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleFinish();
-    }
+    // Marca esta pergunta como respondida E avança para próxima
+    // Fazemos isso em um único setState para garantir atomicidade
+    setAnsweredQuestions(prev => {
+      const newAnswered = new Set(prev).add(question.id);
+
+      // Depois de marcar como respondida, precisamos recalcular as perguntas
+      // e encontrar qual será o próximo índice
+      // Como não podemos chamar getApplicableQuestions aqui (causaria loop),
+      // vamos apenas incrementar o step e deixar o useEffect ajustar
+      setTimeout(() => {
+        if (currentStep < totalSteps - 1) {
+          setCurrentStep(currentStep + 1);
+        } else {
+          handleFinish();
+        }
+      }, 0);
+
+      return newAnswered;
+    });
   };
 
   const handlePrevious = () => {
@@ -964,7 +1043,7 @@ export const Questionnaire = () => {
     return null;
   };
 
-  if (questions.length === 0) {
+  if (questions.length === 0 || !questions[currentStep]) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Carregando questionário...</p>

@@ -44,8 +44,18 @@ const Register = () => {
     }
 
     setLoading(true);
-    await signUp(email, password);
+    const { error } = await signUp(email, password);
     setLoading(false);
+
+    // Note: Supabase may require email confirmation
+    // User will be redirected after confirming email
+    if (!error) {
+      // Don't navigate immediately - let user confirm email first
+      toast({
+        title: "Conta criada!",
+        description: "Verifique seu email para confirmar e então faça login.",
+      });
+    }
   };
 
   if (authLoading) {
