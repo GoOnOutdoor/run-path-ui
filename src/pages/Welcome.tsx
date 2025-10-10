@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-trail.jpg";
+import logo from "@/assets/logo.png";
 
 const Welcome = () => {
   const { user, loading } = useAuth();
@@ -36,8 +37,17 @@ const Welcome = () => {
       
       {/* Content */}
       <div className="relative z-10 max-w-2xl text-center space-y-8">
-        <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4">
-          <span className="text-orange-500">Inteligência</span> a Cada Passo
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <img
+            src={logo}
+            alt="Go On Outdoor"
+            className="w-32 h-32 object-contain"
+          />
+        </div>
+
+        <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-4 whitespace-nowrap mx-auto flex justify-center">
+          <span className="text-orange-500">Inteligência</span>&nbsp;a Cada Passo
         </h1>
         
         <p className="text-xl text-muted-foreground max-w-xl mx-auto">
@@ -50,9 +60,11 @@ const Welcome = () => {
               Começar Agora
             </Button>
           </Link>
-          <Button variant="outline" size="lg" className="text-base">
-            Saiba Mais
-          </Button>
+          <Link to="/saiba-mais">
+            <Button variant="outline" size="lg" className="text-base">
+              Saiba Mais
+            </Button>
+          </Link>
         </div>
       </div>
     </div>
