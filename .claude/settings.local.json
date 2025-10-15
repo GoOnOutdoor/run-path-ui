@@ -6,7 +6,8 @@
       "Bash(npm run dev:*)",
       "Bash(supabase:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx supabase db push:*)"
+      "Bash(npx supabase db push:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,3 +1,6 @@
+import { generateJDPlan } from "@/lib/jd/generator";
+import type { JDZones, WeekdayPT } from "@/lib/jd/types";
+
 // Training Plan Generator Logic
 
 export interface WorkoutSession {
@@ -6,6 +9,7 @@ export interface WorkoutSession {
   duration: number;
   distance?: number;
   description: string;
+  scheduledDate?: string;
 }
 
 export interface WeekPlan {
@@ -21,10 +25,14 @@ export interface TrainingPlan {
     weekly_frequency: number;
     plan_duration: number;
     available_days: string[];
+    start_date?: string;
+    event_date?: string | null;
   };
   weekly_structure: WeekPlan[];
   total_volume: number;
   progression_rate: number;
+  jd_zones?: JDZones;
+  jd_notes?: string[];
 }
 
 const WORKOUT_TYPES = {
@@ -91,7 +99,7 @@ function distributeWorkouts(
   const moderateCount = Math.ceil(frequency * WORKOUT_TYPES.moderate.ratio);
   const intenseCount = frequency - easyCount - moderateCount;
   
-  let workoutTypes: Array<"easy" | "moderate" | "intense"> = [
+  const workoutTypes: Array<"easy" | "moderate" | "intense"> = [
     ...Array(easyCount).fill("easy"),
     ...Array(moderateCount).fill("moderate"),
     ...Array(intenseCount).fill("intense"),
@@ -172,5 +180,90 @@ export function generateTrainingPlan(
     weekly_structure: weeklyStructure,
     total_volume: totalVolume,
     progression_rate: 1.1, // 10% weekly progression
+  };
+}
+
+// Daniels-based generator (compat wrapper)
+// Produces the same TrainingPlan shape using the advanced JD engine under src/lib/jd
+export interface JDCompatParams {
+  athleteId: string;
+  athleteName: string;
+  distanceKm: number;
+  weeklyFrequency: number;
+  availableDaysPT: string[]; // e.g., ["Seg","Qua","Sáb"]
+  startDateISO: string; // YYYY-MM-DD
+  eventDateISO?: string;
+  planDurationWeeks?: number; // used if eventDate not provided
+  timeEstimates?: string; // e.g., "10k em 45:00 e 21k em 1:45"
+  experience?: string;
+  notes?: string;
+}
+
+export async function generateTrainingPlanJDCompat(params: JDCompatParams): Promise<TrainingPlan> {
+  const availableDaysJD = params.availableDaysPT.map((day) => day as WeekdayPT);
+  const jd = generateJDPlan({
+    athleteId: params.athleteId,
+    athleteName: params.athleteName,
+    startDate: params.startDateISO,
+    eventDate: params.eventDateISO,
+    planDurationWeeks: params.planDurationWeeks,
+    distanceKm: params.distanceKm,
+    weeklyFrequency: params.weeklyFrequency,
+    availableDays: availableDaysJD,
+    timeEstimates: params.timeEstimates,
+    specialObservations: params.notes,
+    experience: params.experience || "unknown",
+  });
+
+  // Map JD sessions to simple calendar-friendly buckets
+  type SimpleType = "easy" | "moderate" | "intense";
+  const mapType = (w: string): SimpleType => {
+    if (w === "Corrida Leve") return "easy";
+    if (w === "Long Run") return "moderate";
+    if (w === "Fartlek" || w === "Contínuo" || w === "Progressivo") return "moderate";
+    return "intense"; // Limiar, Intervalado, Tempo Run, Teste, Race Day
+  };
+
+  // Group by week
+  const weeksMap = new Map<number, WeekPlan>();
+  let totalVolumeKm = 0;
+  for (const s of jd.sessions) {
+    const type = mapType(s.workoutType);
+    const wk = weeksMap.get(s.weekNumber) || { week: s.weekNumber, workouts: [], totalVolume: 0 };
+    const dt = new Date(s.date);
+    const dow = dt.getDay(); // 0..6 (Sun..Sat)
+    const dayStr = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][dow];
+    wk.workouts.push({
+      day: dayStr,
+      type,
+      duration: s.durationMinutes,
+      distance: s.distanceKm ?? undefined,
+      description: s.description,
+      scheduledDate: s.date,
+    });
+    const rawKm = s.distanceKm ?? (s.durationMinutes / 60) * 10; // fallback: 10 km/h ~ 6:00 pace
+    const sessionKm = parseFloat(rawKm.toFixed(1));
+    wk.totalVolume += sessionKm;
+    totalVolumeKm += sessionKm;
+    weeksMap.set(s.weekNumber, wk);
+  }
+
+  const weekly_structure = Array.from(weeksMap.values()).sort((a, b) => a.week - b.week);
+
+  return {
+    user_profile: {
+      objective: "Daniels",
+      target_distance: String(params.distanceKm),
+      weekly_frequency: params.weeklyFrequency,
+      plan_duration: weekly_structure.length,
+      available_days: params.availableDaysPT,
+      start_date: params.startDateISO,
+      event_date: params.eventDateISO ?? null,
+    },
+    weekly_structure,
+    total_volume: totalVolumeKm,
+    progression_rate: 1.1,
+    jd_zones: jd.zones,
+    jd_notes: jd.notesAndAssumptions,
   };
 }

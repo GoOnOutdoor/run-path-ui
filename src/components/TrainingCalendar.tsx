@@ -36,10 +36,15 @@ export function TrainingCalendar({ weeklyStructure, startDate = new Date() }: Tr
   weeklyStructure.forEach((week) => {
     const weekStart = startOfWeek(addWeeks(startDate, week.week - 1), { weekStartsOn: 1 });
     week.workouts.forEach((workout) => {
-      const dayOffset = DAY_MAP[workout.day];
-      const workoutDate = new Date(weekStart);
-      workoutDate.setDate(workoutDate.getDate() + dayOffset);
-      workoutsByDate.set(format(workoutDate, "yyyy-MM-dd"), workout);
+      if (workout.scheduledDate) {
+        const scheduled = new Date(workout.scheduledDate);
+        workoutsByDate.set(format(scheduled, "yyyy-MM-dd"), workout);
+      } else {
+        const dayOffset = DAY_MAP[workout.day];
+        const workoutDate = new Date(weekStart);
+        workoutDate.setDate(workoutDate.getDate() + dayOffset);
+        workoutsByDate.set(format(workoutDate, "yyyy-MM-dd"), workout);
+      }
     });
   });
 

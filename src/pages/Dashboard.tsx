@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Questionnaire } from "@/components/Questionnaire";
 import { TrainingCalendar } from "@/components/TrainingCalendar";
 import { PlanMetrics } from "@/components/PlanMetrics";
-import { generateTrainingPlan, TrainingPlan } from "@/lib/trainingPlanGenerator";
+import { generateTrainingPlan, generateTrainingPlanJDCompat, TrainingPlan } from "@/lib/trainingPlanGenerator";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Download, RefreshCw } from "lucide-react";
 
@@ -73,13 +73,58 @@ const Dashboard = () => {
     setIsGenerating(true);
 
     try {
-      // Generate plan based on student data
-      const plan = generateTrainingPlan(
-        studentData.objective,
-        studentData.distance || "5",
-        studentData.weekly_frequency,
-        studentData.available_days
-      );
+      const distanceField = studentData.distance;
+      const customDistance = studentData.custom_distance;
+      const parsedDistance = distanceField === "custom"
+        ? Number(customDistance)
+        : Number(String(distanceField || "").replace(/[^0-9.]/g, ""));
+
+      const distanceKm = parsedDistance && !Number.isNaN(parsedDistance) ? parsedDistance : 0;
+      const weeklyFrequency = Number(studentData.weekly_frequency) || 3;
+      const fallbackDays = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+      const availableDays: string[] = Array.isArray(studentData.available_days) && studentData.available_days.length > 0
+        ? studentData.available_days
+        : fallbackDays.slice(0, Math.min(Math.max(weeklyFrequency, 1), fallbackDays.length));
+      const startDateISO = studentData.start_date || new Date().toISOString().split("T")[0];
+      const eventDateISO = studentData.event_date || undefined;
+      const planDurationWeeks = (() => {
+        if (studentData.custom_duration) return Number(studentData.custom_duration);
+        if (studentData.plan_duration) {
+          const num = Number(studentData.plan_duration);
+          if (!Number.isNaN(num)) return num;
+        }
+        return undefined;
+      })();
+
+      const athleteName = studentData.full_name || studentData.name || user.email || "Atleta";
+
+      let plan: TrainingPlan;
+
+      if (distanceKm >= 15 && distanceKm <= 50) {
+        plan = await generateTrainingPlanJDCompat({
+          athleteId: studentData.id || user.id,
+          athleteName,
+          distanceKm,
+          weeklyFrequency,
+          availableDaysPT: availableDays,
+          startDateISO,
+          eventDateISO,
+          planDurationWeeks,
+          timeEstimates: studentData.estimated_times,
+          experience: studentData.experience,
+          notes: studentData.special_observations,
+        });
+      } else {
+        plan = generateTrainingPlan(
+          studentData.objective,
+          String(distanceKm || studentData.distance || "5"),
+          weeklyFrequency,
+          availableDays,
+          planDurationWeeks
+        );
+        plan.user_profile.start_date = startDateISO;
+        plan.user_profile.event_date = eventDateISO ?? null;
+      }
 
       // Save to database
       const { error } = await supabase
@@ -214,6 +259,31 @@ const Dashboard = () => {
 
             <TabsContent value="workouts" className="space-y-6">
               <PlanMetrics plan={trainingPlan} />
+
+              {trainingPlan.jd_zones && (
+                <Card className="p-6 border-2 border-border">
+                  <h3 className="text-2xl font-bold mb-4">Zonas de Ritmo (Daniels A1–A6)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    {Object.entries(trainingPlan.jd_zones).map(([zone, pace]) => (
+                      <div key={zone} className="flex flex-col border border-border rounded-md p-3 bg-card/50">
+                        <span className="text-xs uppercase text-muted-foreground">{zone}</span>
+                        <span className="text-base font-semibold">{pace.paceMinPerKm} – {pace.paceMaxPerKm} min/km</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
+              {trainingPlan.jd_notes && trainingPlan.jd_notes.length > 0 && (
+                <Card className="p-6 border-2 border-border">
+                  <h3 className="text-2xl font-bold mb-4">Notas e Assunções</h3>
+                  <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+                    {trainingPlan.jd_notes.map((note, idx) => (
+                      <li key={idx}>{note}</li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
               
               <Card className="p-6 border-2 border-border">
                 <h3 className="text-2xl font-bold mb-6">Estrutura Semanal</h3>
@@ -223,7 +293,7 @@ const Dashboard = () => {
                       <div className="flex justify-between items-center">
                         <h4 className="text-lg font-semibold">Semana {week.week}</h4>
                         <span className="text-sm text-muted-foreground">
-                          Volume: {Math.round(week.totalVolume)} km
+                          Volume: {week.totalVolume.toFixed(1)} km
                         </span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -256,7 +326,10 @@ const Dashboard = () => {
             </TabsContent>
 
             <TabsContent value="calendar">
-              <TrainingCalendar weeklyStructure={trainingPlan.weekly_structure} />
+              <TrainingCalendar
+                weeklyStructure={trainingPlan.weekly_structure}
+                startDate={trainingPlan.user_profile.start_date ? new Date(trainingPlan.user_profile.start_date) : undefined}
+              />
             </TabsContent>
 
             <TabsContent value="settings" className="space-y-6">
@@ -269,7 +342,15 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium">Distância Meta:</label>
-                    <p className="text-muted-foreground">{studentData?.distance} km</p>
+                    <p className="text-muted-foreground">
+                      {studentData?.distance === "custom"
+                        ? `${studentData?.custom_distance ?? 0} km`
+                        : studentData?.distance?.includes("k")
+                        ? studentData.distance
+                        : studentData?.distance
+                        ? `${studentData.distance} km`
+                        : "N/D"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Frequência Semanal:</label>

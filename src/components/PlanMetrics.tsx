@@ -23,7 +23,9 @@ export function PlanMetrics({ plan }: PlanMetricsProps) {
     {} as Record<string, number>
   );
 
-  const avgWeeklyVolume = plan.total_volume / plan.weekly_structure.length;
+  const avgWeeklyVolume = plan.weekly_structure.length
+    ? plan.total_volume / plan.weekly_structure.length
+    : 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -42,7 +44,7 @@ export function PlanMetrics({ plan }: PlanMetricsProps) {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground">Volume Total</p>
-            <p className="text-3xl font-bold mt-2">{Math.round(plan.total_volume)}</p>
+            <p className="text-3xl font-bold mt-2">{plan.total_volume.toFixed(1)}</p>
             <p className="text-sm text-muted-foreground">km</p>
           </div>
           <TrendingUp className="h-8 w-8 text-primary" />
@@ -79,10 +81,10 @@ export function PlanMetrics({ plan }: PlanMetricsProps) {
             <div key={week.week} className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span>Semana {week.week}</span>
-                <span className="font-semibold">{Math.round(week.totalVolume)} km</span>
+                <span className="font-semibold">{week.totalVolume.toFixed(1)} km</span>
               </div>
               <Progress
-                value={(week.totalVolume / avgWeeklyVolume) * 50}
+                value={avgWeeklyVolume ? (week.totalVolume / avgWeeklyVolume) * 50 : 0}
                 className="h-2"
               />
             </div>
