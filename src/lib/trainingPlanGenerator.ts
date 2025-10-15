@@ -92,22 +92,38 @@ function distributeWorkouts(
   availableDays: string[]
 ): WorkoutSession[] {
   const workouts: WorkoutSession[] = [];
-  const selectedDays = availableDays.slice(0, frequency);
-  
+  const freq = Math.max(1, Math.floor(frequency || 1));
+  const selectedDays = availableDays.slice(0, freq);
+
   // Calculate workout distribution
-  const easyCount = Math.ceil(frequency * WORKOUT_TYPES.easy.ratio);
-  const moderateCount = Math.ceil(frequency * WORKOUT_TYPES.moderate.ratio);
-  const intenseCount = frequency - easyCount - moderateCount;
-  
+  let easyCount = Math.round(freq * WORKOUT_TYPES.easy.ratio);
+  let moderateCount = Math.round(freq * WORKOUT_TYPES.moderate.ratio);
+  let intenseCount = freq - easyCount - moderateCount;
+
+  if (intenseCount < 0) {
+    moderateCount = Math.max(0, moderateCount + intenseCount); // reduce moderate if negative spill
+    intenseCount = 0;
+  }
+
+  while (easyCount + moderateCount + intenseCount > freq) {
+    if (moderateCount > 0) moderateCount--;
+    else if (easyCount > 0) easyCount--;
+    else break;
+  }
+
+  while (easyCount + moderateCount + intenseCount < freq) {
+    easyCount++;
+  }
+
   const workoutTypes: Array<"easy" | "moderate" | "intense"> = [
-    ...Array(easyCount).fill("easy"),
-    ...Array(moderateCount).fill("moderate"),
-    ...Array(intenseCount).fill("intense"),
+    ...Array(easyCount > 0 ? easyCount : 0).fill("easy"),
+    ...Array(moderateCount > 0 ? moderateCount : 0).fill("moderate"),
+    ...Array(intenseCount > 0 ? intenseCount : 0).fill("intense"),
   ];
-  
+
   // Distribute volume
-  const volumePerWorkout = weeklyVolume / frequency;
-  
+  const volumePerWorkout = weeklyVolume / freq;
+
   selectedDays.forEach((dayPT, index) => {
     const day = WEEKDAY_MAP[dayPT] || "monday";
     const type = workoutTypes[index] || "easy";
